@@ -1,0 +1,37 @@
+pipeline {
+    agent any
+
+    stages {
+
+        stage('Checkout Code') {
+            steps {
+                git branch: 'main',
+                    url: 'https://github.com/Sheba-John/API-Performance-Test.git'
+            }
+        }
+
+        stage('Verify k6 Installation') {
+            steps {
+                sh 'k6 version'
+            }
+        }
+
+        stage('Run k6 CRUD Performance Test') {
+            steps {
+                sh '''
+                cd tests
+                k6 run crud_load_test.js
+                '''
+            }
+        }
+    }
+
+    post {
+        success {
+            echo '✅ k6 performance tests passed'
+        }
+        failure {
+            echo '❌ k6 performance tests failed'
+        }
+    }
+}
