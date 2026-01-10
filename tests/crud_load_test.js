@@ -28,6 +28,6 @@ export const options = {
 export default function () {
   const bookingId = createBooking();
   readBooking(bookingId);
-  // updateBooking(bookingId);
-  // deleteBooking(bookingId);
+  updateBooking(bookingId);
+  deleteBooking(bookingId);
 }
