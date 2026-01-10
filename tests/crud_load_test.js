@@ -8,9 +8,9 @@ import { deleteBooking } from "../scenarios/delete_booking.js";
 export const options = {
   // Gradual ramp-up and ramp-down of virtual users
   stages: [
-    { duration: "1m", target: 10 },
-    { duration: "2m", target: 10 },
-    { duration: "1m", target: 0 }
+    { duration: __ENV.RAMP_UP || "1m", target: Number(__ENV.VUS) || 10 },
+    { duration: __ENV.STEADY || "2m", target: Number(__ENV.VUS) || 10 },
+    { duration: __ENV.RAMP_DOWN || "1m", target: 0 }
   ],
   // Performance thresholds for response time and failure rate.
   thresholds: {
