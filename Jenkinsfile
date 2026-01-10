@@ -17,13 +17,17 @@ pipeline {
         }
 
         stage('Run k6 CRUD Performance Test') {
-            steps {
-                sh '''
-                cd tests
-                k6 run crud_load_test.js
-                '''
-            }
-        }
+    steps {
+        sh """
+        cd tests
+        VUS=${params.VUS} \
+        RAMP_UP=${params.RAMP_UP} \
+        STEADY=${params.STEADY} \
+        RAMP_DOWN=${params.RAMP_DOWN} \
+        k6 run crud_load_test.js
+        """
+    }
+}
     }
 
     post {
