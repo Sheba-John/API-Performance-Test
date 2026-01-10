@@ -19,18 +19,23 @@ pipeline {
         stage('Run k6 CRUD Performance Test') {
     steps {
         sh """
+        mkdir -p reports
         cd tests
         VUS=${params.VUS} \
         RAMP_UP=${params.RAMP_UP} \
         STEADY=${params.STEADY} \
         RAMP_DOWN=${params.RAMP_DOWN} \
-        k6 run crud_load_test.js
+        k6 run crud_load_test.js \
+        --summary-export=../reports/summary.json
         """
     }
 }
     }
 
     post {
+        always {
+        archiveArtifacts artifacts: 'reports/*.json', fingerprint: true
+        }
         success {
             echo '✅ k6 performance tests passed'
         }
