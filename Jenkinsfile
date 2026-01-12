@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     parameters {
-        string(name: 'VUS', defaultValue: '10', description: 'Virtual Users')
-        string(name: 'DURATION', defaultValue: '30s', description: 'Test duration')
+        string(name: 'VUS', defaultValue: '10', description: 'Number of Virtual Users')
+        string(name: 'DURATION', defaultValue: '30s', description: 'Total test duration (e.g. 30s, 1m)')
     }
 
     stages {
@@ -18,15 +18,14 @@ pipeline {
         stage('Run k6 Test (Docker)') {
             steps {
                 sh '''
-                mkdir -p reports
+                  mkdir -p reports
 
-                docker run --rm \
-                  -v "$PWD:/scripts" \
-                  grafana/k6 run \
-                  /scripts/tests/crud_load_test.js \
-                  -e VUS=$VUS \
-                  -e DURATION=$DURATION \
-                  --summary-export=/scripts/reports/summary.json
+                  docker run --rm \
+                    -v "$PWD:/scripts" \
+                    grafana/k6 run /scripts/tests/crud_load_test.js \
+                    -e VUS=${VUS} \
+                    -e DURATION=${DURATION} \
+                    --summary-export=/scripts/reports/summary.json
                 '''
             }
         }
@@ -34,11 +33,11 @@ pipeline {
         stage('Generate HTML Report') {
             steps {
                 sh '''
-                docker run --rm \
-                  -v "$PWD:/reports" \
-                  ghcr.io/benc-uk/k6-reporter:latest \
-                  /reports/summary.json \
-                  --output /reports/k6-report.html
+                  docker run --rm \
+                    -v "$PWD:/reports" \
+                    ghcr.io/benc-uk/k6-reporter:latest \
+                    /reports/summary.json \
+                    --output /reports/k6-report.html
                 '''
             }
         }
