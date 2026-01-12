@@ -1,13 +1,6 @@
 pipeline {
     agent any
 
-    environment {
-        VUS = '10'
-        RAMP_UP = '10s'
-        STEADY = '30s'
-        RAMP_DOWN = '10s'
-    }
-
     stages {
 
         stage('Checkout Code') {
@@ -17,38 +10,29 @@ pipeline {
             }
         }
 
-        stage('Verify k6 Installation') {
-            steps {
-                sh 'k6 version'
-            }
-        }
-
-        stage('Install HTML Reporter') {
-            steps {
-                sh 'npm install -g k6-reporter'
-            }
-        }
-
-        stage('Run k6 CRUD Performance Test') {
+        stage('Run k6 CRUD Test (Docker)') {
             steps {
                 sh '''
                 mkdir -p reports
 
-                k6 run \
-                  -e VUS=${VUS} \
-                  -e RAMP_UP=${RAMP_UP} \
-                  -e STEADY=${STEADY} \
-                  -e RAMP_DOWN=${RAMP_DOWN} \
+                docker run --rm \
+                  -v $PWD:/work \
+                  -w /work \
+                  grafana/k6 run \
                   tests/crud_load_test.js \
                   --summary-export=reports/summary.json
                 '''
             }
         }
 
-        stage('Generate HTML Report') {
+        stage('Generate HTML Report (Docker)') {
             steps {
                 sh '''
-                k6-reporter reports/summary.json \
+                docker run --rm \
+                  -v $PWD:/work \
+                  -w /work \
+                  ghcr.io/benc-uk/k6-reporter:latest \
+                  reports/summary.json \
                   --output reports/k6-report.html
                 '''
             }
@@ -58,12 +42,6 @@ pipeline {
     post {
         always {
             archiveArtifacts artifacts: 'reports/*', fingerprint: true
-        }
-        success {
-            echo '✅ k6 performance tests passed'
-        }
-        failure {
-            echo '❌ k6 performance tests failed'
         }
     }
 }
