@@ -1,3 +1,5 @@
+import { sleep } from "k6";
+
 // Imports all CRUD scenario functions.
 import { createBooking } from "../scenarios/create_booking.js";
 import { readBooking } from "../scenarios/read_booking.js";
@@ -25,9 +27,16 @@ export const options = {
  */
 
 // Represents one full iteration per virtual user
-export default function () {
+export default function crudBookingFlow() {
   const bookingId = createBooking();
+   // Safety check
+  if (!bookingId) {
+    return;
+  }
   readBooking(bookingId);
+  sleep(1);
   updateBooking(bookingId);
+  sleep(1);
   deleteBooking(bookingId);
+  sleep(1);
 }

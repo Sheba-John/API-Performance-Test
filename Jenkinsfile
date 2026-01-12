@@ -1,6 +1,11 @@
 pipeline {
     agent any
 
+    parameters {
+        string(name: 'VUS', defaultValue: '10', description: 'Virtual Users')
+        string(name: 'DURATION', defaultValue: '30s', description: 'Test duration')
+    }
+
     stages {
 
         stage('Checkout Code') {
@@ -10,30 +15,30 @@ pipeline {
             }
         }
 
-        stage('Run k6 CRUD Test (Docker)') {
+        stage('Run k6 Test (Docker)') {
             steps {
                 sh '''
                 mkdir -p reports
 
                 docker run --rm \
-                  -v $PWD:/work \
-                  -w /work \
+                  -v "$PWD:/scripts" \
                   grafana/k6 run \
-                  tests/crud_load_test.js \
-                  --summary-export=reports/summary.json
+                  /scripts/tests/crud_load_test.js \
+                  -e VUS=$VUS \
+                  -e DURATION=$DURATION \
+                  --summary-export=/scripts/reports/summary.json
                 '''
             }
         }
 
-        stage('Generate HTML Report (Docker)') {
+        stage('Generate HTML Report') {
             steps {
                 sh '''
                 docker run --rm \
-                  -v $PWD:/work \
-                  -w /work \
+                  -v "$PWD:/reports" \
                   ghcr.io/benc-uk/k6-reporter:latest \
-                  reports/summary.json \
-                  --output reports/k6-report.html
+                  /reports/summary.json \
+                  --output /reports/k6-report.html
                 '''
             }
         }
@@ -42,6 +47,12 @@ pipeline {
     post {
         always {
             archiveArtifacts artifacts: 'reports/*', fingerprint: true
+        }
+        success {
+            echo '✅ Performance tests completed successfully'
+        }
+        failure {
+            echo '❌ Performance tests failed'
         }
     }
 }
